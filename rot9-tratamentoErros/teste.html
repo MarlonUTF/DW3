@@ -7,16 +7,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gradient-to-br from-slate-900 via-purple-950 to-slate-900 min-h-screen text-slate-100 font-sans antialiased">
+<body class="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 min-h-screen text-slate-100 font-sans antialiased">
     
     <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
 
     <div class="max-w-2xl mx-auto px-4 py-12">
         <header class="text-center mb-10">
-            <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent mb-2">
                 Minhas Tarefas
             </h1>
-            <p class="text-purple-300/60 text-sm">Organize seu dia com estilo</p>
+            <p class="text-blue-300/60 text-sm">Organize seu dia com estilo</p>
         </header>
 
         <main class="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl p-6 mb-6">
@@ -27,7 +27,7 @@
                     id="titulo" 
                     placeholder="O que você precisa fazer?" 
                     aria-label="Título da nova tarefa"
-                    class="flex-1 bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-purple-300/40 outline-none focus:border-purple-500/80 focus:bg-white/10 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300"
+                    class="flex-1 bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-blue-300/40 outline-none focus:border-blue-500/80 focus:bg-white/10 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
                     autocomplete="off"
                     autofocus
                     required
@@ -35,34 +35,34 @@
                 <button 
                     type="submit" 
                     aria-label="Adicionar tarefa"
-                    class="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-medium px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-purple-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[140px]"
+                    class="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-400 hover:to-blue-400 text-white font-medium px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-green-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[140px]"
                 >
                     <i class="fas fa-plus mr-2"></i>Adicionar
                 </button>
             </form>
 
             <nav class="flex gap-2 mb-6 flex-wrap" aria-label="Filtrar tarefas">
-                <button onclick="filtrar('todas')" data-filtro="todas" class="filtro-btn px-4 py-2 rounded-xl text-sm font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 transition-all duration-300">
+                <button onclick="filtrar('todas')" data-filtro="todas" class="filtro-btn px-4 py-2 rounded-xl text-sm font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 transition-all duration-300">
                     Todas
                 </button>
-                <button onclick="filtrar('pendente')" data-filtro="pendente" class="filtro-btn px-4 py-2 rounded-xl text-sm font-medium bg-white/5 text-purple-300/60 border border-white/10 hover:bg-white/10 hover:text-purple-300 transition-all duration-300">
+                <button onclick="filtrar('pendente')" data-filtro="pendente" class="filtro-btn px-4 py-2 rounded-xl text-sm font-medium bg-white/5 text-blue-300/60 border border-white/10 hover:bg-white/10 hover:text-blue-300 transition-all duration-300">
                     Pendentes
                 </button>
-                <button onclick="filtrar('concluida')" data-filtro="concluida" class="filtro-btn px-4 py-2 rounded-xl text-sm font-medium bg-white/5 text-purple-300/60 border border-white/10 hover:bg-white/10 hover:text-purple-300 transition-all duration-300">
+                <button onclick="filtrar('concluida')" data-filtro="concluida" class="filtro-btn px-4 py-2 rounded-xl text-sm font-medium bg-white/5 text-blue-300/60 border border-white/10 hover:bg-white/10 hover:text-blue-300 transition-all duration-300">
                     Concluídas
                 </button>
             </nav>
 
             <div id="listaTarefas" class="space-y-3 min-h-[150px]" aria-live="polite">
-                <div class="text-center text-purple-300/40 py-12 flex flex-col items-center justify-center">
+                <div class="text-center text-blue-300/40 py-12 flex flex-col items-center justify-center">
                     <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
                     <p class="text-sm font-medium">Conectando à API...</p>
                 </div>
             </div>
         </main>
 
-        <footer class="text-center text-purple-300/30 text-xs">
-            <p>API configurada em <span class="text-purple-400/50 font-mono tracking-wide">http://localhost:3000</span></p>
+        <footer class="text-center text-blue-300/30 text-xs">
+            <p>API configurada em <span class="text-blue-400/50 font-mono tracking-wide">http://localhost:3000</span></p>
         </footer>
     </div>
 
@@ -91,7 +91,7 @@
             const toast = document.createElement('div');
             
             const cores = tipo === 'sucesso' 
-                ? 'bg-emerald-500/90 border-emerald-500/50' 
+                ? 'bg-green-500/90 border-green-500/50' 
                 : 'bg-red-500/90 border-red-500/50';
                 
             const icone = tipo === 'sucesso' ? 'fa-check-circle' : 'fa-exclamation-circle';
@@ -139,7 +139,7 @@
                     : `Nenhuma tarefa ${filtroAtual} encontrada`;
                 
                 listaContainer.innerHTML = `
-                    <div class="text-center text-purple-300/40 py-12">
+                    <div class="text-center text-blue-300/40 py-12">
                         <i class="fas fa-clipboard-list text-4xl mb-3 block opacity-50"></i>
                         <p>${mensagem}</p>
                     </div>`;
@@ -151,11 +151,11 @@
                 const tituloSeguro = escapeHTML(t.titulo);
                 
                 return `
-                    <div class="group flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-purple-500/30 rounded-xl p-4 transition-all duration-300 ${isConcluida ? 'opacity-60 bg-white/5 hover:bg-white/5' : ''}">
+                    <div class="group flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-green-500/30 rounded-xl p-4 transition-all duration-300 ${isConcluida ? 'opacity-60 bg-white/5 hover:bg-white/5' : ''}">
                         
                         <button onclick="alternarStatus(${t.id}, '${t.status}')" 
                                 aria-label="${isConcluida ? 'Marcar como pendente' : 'Marcar como concluída'}"
-                                class="flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-purple-500/50 ${isConcluida ? 'bg-emerald-500 border-emerald-500' : 'border-purple-400/40 hover:border-purple-400'}">
+                                class="flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-green-500/50 ${isConcluida ? 'bg-green-500 border-green-500' : 'border-blue-400/40 hover:border-blue-400'}">
                             ${isConcluida ? '<i class="fas fa-check text-white text-xs"></i>' : ''}
                         </button>
                         
@@ -165,7 +165,7 @@
                             </p>
                         </div>
                         
-                        <span class="text-[10px] uppercase tracking-wider px-2 py-1 rounded-md font-bold ${isConcluida ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}">
+                        <span class="text-[10px] uppercase tracking-wider px-2 py-1 rounded-md font-bold ${isConcluida ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}">
                             ${t.status}
                         </span>
                         
@@ -199,7 +199,7 @@
 
                 if (res.ok) {
                     inputTitulo.value = '';
-                    inputTitulo.focus(); // Retorna o foco para facilitar novas inclusões
+                    inputTitulo.focus();
                     mostrarToast('Tarefa adicionada!', 'sucesso');
                     carregarTarefas();
                 } else {
@@ -220,7 +220,6 @@
                 const res = await fetch(`${API}/tarefas/${id}/concluir`, { method: 'PATCH' });
                 if (!res.ok) throw new Error();
                 
-                // Feedback sutil
                 const msg = statusAtual === 'concluida' ? 'Marcada como pendente' : 'Tarefa concluída!';
                 mostrarToast(msg, 'sucesso');
                 
@@ -255,17 +254,16 @@
                 const isAtivo = btn.dataset.filtro === status;
                 
                 if (isAtivo) {
-                    btn.classList.add('bg-purple-500/30', 'text-white', 'border-purple-400/50', 'shadow-inner');
-                    btn.classList.remove('bg-purple-500/20', 'bg-white/5', 'text-purple-300/60', 'border-white/10');
+                    btn.classList.add('bg-blue-500/30', 'text-white', 'border-blue-400/50', 'shadow-inner');
+                    btn.classList.remove('bg-blue-500/20', 'bg-white/5', 'text-blue-300/60', 'border-white/10');
                 } else {
-                    btn.classList.remove('bg-purple-500/30', 'text-white', 'border-purple-400/50', 'shadow-inner');
-                    btn.classList.add('bg-white/5', 'text-purple-300/60', 'border-white/10');
+                    btn.classList.remove('bg-blue-500/30', 'text-white', 'border-blue-400/50', 'shadow-inner');
+                    btn.classList.add('bg-white/5', 'text-blue-300/60', 'border-white/10');
                 }
             });
 
-            // Mostra o loader rápido na transição de filtros
             listaContainer.innerHTML = `
-                <div class="text-center text-purple-300/40 py-8">
+                <div class="text-center text-blue-300/40 py-8">
                     <i class="fas fa-circle-notch fa-spin text-2xl"></i>
                 </div>`;
                 
