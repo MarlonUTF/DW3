@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerenciador de Tarefas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #f3f4f6; }
+  </style>
+</head>
+<body class="font-sans antialiased">
+
+  <div class="max-w-3xl mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center">📋 Minhas Tarefas</h1>
+
+    <!-- Formulário de nova tarefa -->
+    <div class="bg-white rounded-lg shadow p-6 mb-8">
+      <div class="flex gap-3">
+        <input type="text" id="descricaoInput" placeholder="Digite a nova tarefa..."
+               class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+        <button id="criarBtn" class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition">+ Adicionar</button>
+      </div>
+    </div>
+
+    <!-- Lista de tarefas -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+      <ul id="listaTarefas" class="divide-y divide-gray-200">
+        <li class="p-4 text-center text-gray-500">Carregando tarefas...</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000/tarefas'
+
+    async function carregarTarefas() {
+      try {
+        const response = await fetch(API_URL)
+        if (!response.ok) throw new Error('Erro ao carregar tarefas')
+        const tarefas = await response.json()
+        renderizarTarefas(tarefas)
+      } catch (error) {
+        console.error(error)
+        document.getElementById('listaTarefas').innerHTML = '<li class="p-4 text-center text-red-500">Erro ao carregar tarefas. Verifique se o servidor está rodando.</li>'
+      }
+    }
+
+    function renderizarTarefas(tarefas) {
+      const ul = document.getElementById('listaTarefas')
+      if (!tarefas.length) {
+        ul.innerHTML = '<li class="p-4 text-center text-gray-500">Nenhuma tarefa cadastrada. Adicione uma!</li>'
+        return
+      }
+
+      ul.innerHTML = tarefas.map(tarefa => `
+        <li class="p-4 flex items-center justify-between hover:bg-gray-50 transition" data-id="${tarefa.id}">
+          <div class="flex items-center gap-3 flex-1">
+            <input type="checkbox" ${tarefa.concluido ? 'checked' : ''} class="toggle-tarefa w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer">
+            <span class="text-gray-800 ${tarefa.concluido ? 'line-through text-gray-400' : ''}">${escapeHtml(tarefa.descricao)}</span>
+          </div>
+          <button class="deletar-tarefa text-red-500 hover:text-red-700 font-medium px-3 py-1 rounded hover:bg-red-50 transition">Excluir</button>
+        </li>
+      `).join('')
+
+      // Eventos dos checkboxes (atualizar status)
+      document.querySelectorAll('.toggle-tarefa').forEach(checkbox => {
+        checkbox.addEventListener('change', async (e) => {
+          const li = checkbox.closest('li')
+          const id = li.dataset.id
+          const concluido = checkbox.checked
+          try {
+            const response = await fetch(`${API_URL}/${id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ concluido })
+            })
+            if (!response.ok) throw new Error('Falha ao atualizar')
+            // Atualiza visualmente o span
+            const span = li.querySelector('span')
+            if (concluido) span.classList.add('line-through', 'text-gray-400')
+            else span.classList.remove('line-through', 'text-gray-400')
+          } catch (error) {
+            console.error(error)
+            checkbox.checked = !concluido // desfaz
+            alert('Erro ao atualizar tarefa')
+          }
+        })
+      })
+
+      // Eventos dos botões excluir
+      document.querySelectorAll('.deletar-tarefa').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const li = btn.closest('li')
+          const id = li.dataset.id
+          if (!confirm('Tem certeza que deseja excluir esta tarefa?')) return
+          try {
+            const response = await fetch(`${API_URL}/${id}`, { method: 'DELETE' })
+            if (!response.ok) throw new Error('Falha ao excluir')
+            li.remove()
+            // Se não houver mais nenhuma tarefa, exibe mensagem
+            if (document.querySelectorAll('#listaTarefas li').length === 0) {
+              document.getElementById('listaTarefas').innerHTML = '<li class="p-4 text-center text-gray-500">Nenhuma tarefa cadastrada. Adicione uma!</li>'
+            }
+          } catch (error) {
+            console.error(error)
+            alert('Erro ao excluir tarefa')
+          }
+        })
+      })
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div')
+      div.textContent = text
+      return div.innerHTML
+    }
+
+    document.getElementById('criarBtn').addEventListener('click', async () => {
+      const input = document.getElementById('descricaoInput')
+      const descricao = input.value.trim()
+      if (!descricao) {
+        alert('Digite uma descrição para a tarefa')
+        return
+      }
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ descricao })
+        })
+        if (!response.ok) throw new Error('Erro ao criar tarefa')
+        input.value = ''
+        await carregarTarefas()
+      } catch (error) {
+        console.error(error)
+        alert('Erro ao criar tarefa')
+      }
+    })
+
+    // Permitir Enter no campo de texto
+    document.getElementById('descricaoInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') document.getElementById('criarBtn').click()
+    })
+
+    carregarTarefas()
+  </script>
+</body>
+</html>

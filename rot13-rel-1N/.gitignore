@@ -1,0 +1,5 @@
+# Dependências instaladas pelo npm/yarn
+node_modules/
+
+# Arquivos de configuração de ambiente
+.env
