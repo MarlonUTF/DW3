@@ -3,8 +3,22 @@ class TarefaService {
     this.tarefaRepository = tarefaRepository
   }
 
-  async listarTodas() {
-    return this.tarefaRepository.buscarTodos()
+  // Mapeia os campos planos (projeto_id, projeto_nome) para um objeto "projeto"
+  _formatarTarefa(tarefa) {
+    if (!tarefa) return null
+    const { projeto_id, projeto_nome, ...resto } = tarefa
+    return {
+      ...resto,
+      projeto: {
+        id: projeto_id,
+        nome: projeto_nome || null
+      }
+    }
+  }
+
+  async listarTodas(projetoId = null) {
+    const tarefas = await this.tarefaRepository.buscarTodos(projetoId)
+    return tarefas.map(t => this._formatarTarefa(t))
   }
 
   async buscarPorId(id) {
@@ -12,19 +26,25 @@ class TarefaService {
     if (!tarefa) {
       throw new Error('Tarefa não encontrada')
     }
-    return tarefa
+    return this._formatarTarefa(tarefa)
   }
 
-  async criarTarefa(descricao) {
+  async criarTarefa({ descricao, projetoId }) {
     if (!descricao || descricao.trim() === '') {
       throw new Error('Descrição é obrigatória')
     }
-    const novaTarefa = {
-      descricao: dados.descricao.trim(),
-      concluido: false,
-      projetoId: dados.projetoId
+    if (!projetoId) {
+      throw new Error('Projeto é obrigatório')
     }
-    return this.tarefaRepository.salvar(novaTarefa)
+
+    const novaTarefa = {
+      descricao: descricao.trim(),
+      concluido: false,
+      projetoId
+    }
+
+    const tarefaSalva = await this.tarefaRepository.salvar(novaTarefa)
+    return this._formatarTarefa(tarefaSalva)
   }
 
   async atualizarTarefa(id, dados) {
@@ -37,7 +57,7 @@ class TarefaService {
     if (!tarefaAtualizada) {
       throw new Error('Falha ao atualizar tarefa')
     }
-    return tarefaAtualizada
+    return this._formatarTarefa(tarefaAtualizada)
   }
 
   async deletarTarefa(id) {

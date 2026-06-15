@@ -1,21 +1,47 @@
 import pool from '../../database/pool.js'
 
 class TarefaRepository {
-  async buscarTodos() {
-    const resultado = await pool.query(`
-      SELECT id, descricao, concluido, criada_em
-      FROM tarefas
-      ORDER BY id
-    `)
+  async buscarTodos(projetoId = null) {
+    let query = `
+      SELECT
+        t.id,
+        t.descricao,
+        t.concluido,
+        t.criada_em,
+        t.projeto_id,
+        p.nome AS projeto_nome
+      FROM tarefas t
+      LEFT JOIN projetos p ON p.id = t.projeto_id
+    `
+    const params = []
+
+    if (projetoId) {
+      query += ' WHERE t.projeto_id = $1'
+      params.push(projetoId)
+      // Troca para INNER JOIN quando filtramos por um projeto específico,
+      // pois tarefas sem projeto não pertencem a esse filtro.
+      query = query.replace('LEFT JOIN', 'INNER JOIN')
+    }
+
+    query += ' ORDER BY t.id'
+
+    const resultado = await pool.query(query, params)
     return resultado.rows
   }
 
   async buscarPorId(id) {
     const resultado = await pool.query(
       `
-      SELECT id, descricao, concluido, criada_em
-      FROM tarefas
-      WHERE id = $1
+      SELECT
+        t.id,
+        t.descricao,
+        t.concluido,
+        t.criada_em,
+        t.projeto_id,
+        p.nome AS projeto_nome
+      FROM tarefas t
+      LEFT JOIN projetos p ON p.id = t.projeto_id
+      WHERE t.id = $1
       `,
       [id]
     )
@@ -23,17 +49,27 @@ class TarefaRepository {
   }
 
   async salvar(tarefa) {
-  const resultado = await pool.query(
-    `
+    // Insere a tarefa e retorna os dados básicos
+    const insertResult = await pool.query(
+      `
       INSERT INTO tarefas (descricao, concluido, projeto_id)
       VALUES ($1, $2, $3)
       RETURNING id, descricao, concluido, criada_em, projeto_id
-    `,
-    [tarefa.descricao, tarefa.concluido, tarefa.projetoId]
-  )
+      `,
+      [tarefa.descricao, tarefa.concluido, tarefa.projetoId]
+    )
 
-  return resultado.rows[0]
-}
+    const novaTarefa = insertResult.rows[0]
+
+    // Busca o nome do projeto para manter a resposta consistente
+    const projetoResult = await pool.query(
+      'SELECT nome FROM projetos WHERE id = $1',
+      [novaTarefa.projeto_id]
+    )
+    novaTarefa.projeto_nome = projetoResult.rows[0]?.nome ?? null
+
+    return novaTarefa
+  }
 
   async atualizar(id, dadosAtualizados) {
     const tarefaAtual = await this.buscarPorId(id)
@@ -47,19 +83,27 @@ class TarefaRepository {
       SET descricao = $1,
           concluido = $2
       WHERE id = $3
-      RETURNING id, descricao, concluido, criada_em
+      RETURNING id, descricao, concluido, criada_em, projeto_id
       `,
       [tarefaFinal.descricao, tarefaFinal.concluido, id]
     )
-    return resultado.rows[0] ?? null
+
+    const atualizada = resultado.rows[0]
+    if (!atualizada) return null
+
+    // Complementa com o nome do projeto
+    const projetoResult = await pool.query(
+      'SELECT nome FROM projetos WHERE id = $1',
+      [atualizada.projeto_id]
+    )
+    atualizada.projeto_nome = projetoResult.rows[0]?.nome ?? null
+
+    return atualizada
   }
 
   async remover(id) {
     const resultado = await pool.query(
-      `
-      DELETE FROM tarefas
-      WHERE id = $1
-      `,
+      'DELETE FROM tarefas WHERE id = $1',
       [id]
     )
     return resultado.rowCount > 0

@@ -7,7 +7,7 @@ const service = new TarefaService(repository)
 const controller = new TarefaController(service)
 
 async function tarefaRoutes(fastify, options) {
-  fastify.get('/', controller.listar.bind(controller))
+  fastify.get('/', controller.listar.bind(controller)) 
   fastify.get('/:id', controller.buscarPorId.bind(controller))
   fastify.post('/', controller.criar.bind(controller))
   fastify.patch('/:id', controller.atualizar.bind(controller))
