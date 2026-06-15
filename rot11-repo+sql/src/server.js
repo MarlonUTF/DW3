@@ -1,7 +1,7 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import tarefaRoutes from './features/tarefas/tarefa.route.js'
-import client from './database/client.js'
+import pool from './database/pool.js'
 
 const server = Fastify()
 
@@ -23,7 +23,8 @@ const PORT = process.env.PORT || 3000
 
 const start = async () => {
   try {
-    await client.connect()
+    // Testa a conectividade com o banco
+    await pool.query('SELECT 1')
     console.log('✅ Conectado ao PostgreSQL com sucesso')
 
     await server.listen({ port: PORT })
