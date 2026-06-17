@@ -199,6 +199,20 @@
                 const descricaoSegura = escapeHTML(t.descricao);
                 const projetoNome = escapeHTML(t.projeto?.nome ?? 'Sem projeto');
                 const statusTexto = isConcluida ? 'Concluída' : 'Pendente';
+
+                // Renderiza as tags, se existirem
+                let tagsHTML = '';
+                if (t.tags && t.tags.length > 0) {
+                    tagsHTML = `
+                        <div class="flex flex-wrap gap-1 mt-1.5">
+                            ${t.tags.map(tag => `
+                                <span class="text-[10px] bg-blue-500/10 text-blue-300 px-2 py-0.5 rounded-full border border-blue-500/20">
+                                    ${escapeHTML(tag.nome)}
+                                </span>
+                            `).join('')}
+                        </div>
+                    `;
+                }
                 
                 return `
                     <div class="group flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-green-500/30 rounded-xl p-4 transition-all duration-300 ${isConcluida ? 'opacity-60 bg-white/5 hover:bg-white/5' : ''}">
@@ -214,6 +228,7 @@
                                 ${descricaoSegura}
                             </p>
                             <p class="text-[10px] text-blue-300/50 mt-0.5">${projetoNome}</p>
+                            ${tagsHTML}
                         </div>
                         
                         <span class="text-[10px] uppercase tracking-wider px-2 py-1 rounded-md font-bold ${isConcluida ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}">

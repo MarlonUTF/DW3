@@ -2,32 +2,69 @@ import pool from '../../database/pool.js'
 
 class TarefaRepository {
   async buscarTodos(projetoId = null) {
-    let query = `
-      SELECT
-        t.id,
-        t.descricao,
-        t.concluido,
-        t.criada_em,
-        t.projeto_id,
-        p.nome AS projeto_nome
-      FROM tarefas t
-      LEFT JOIN projetos p ON p.id = t.projeto_id
-    `
-    const params = []
+  // 1. Busca as tarefas (mesma query de antes)
+  let query = `
+    SELECT
+      t.id,
+      t.descricao,
+      t.concluido,
+      t.criada_em,
+      t.projeto_id,
+      p.nome AS projeto_nome
+    FROM tarefas t
+    LEFT JOIN projetos p ON p.id = t.projeto_id
+  `
+  const params = []
 
-    if (projetoId) {
-      query += ' WHERE t.projeto_id = $1'
-      params.push(projetoId)
-      // Troca para INNER JOIN quando filtramos por um projeto específico,
-      // pois tarefas sem projeto não pertencem a esse filtro.
-      query = query.replace('LEFT JOIN', 'INNER JOIN')
-    }
-
-    query += ' ORDER BY t.id'
-
-    const resultado = await pool.query(query, params)
-    return resultado.rows
+  if (projetoId) {
+    query += ' WHERE t.projeto_id = $1'
+    params.push(projetoId)
+    query = query.replace('LEFT JOIN', 'INNER JOIN')
   }
+
+  query += ' ORDER BY t.id'
+
+  const resultado = await pool.query(query, params)
+  const tarefas = resultado.rows
+
+  if (tarefas.length === 0) {
+    return []
+  }
+
+  // 2. Pega os IDs das tarefas encontradas
+  const ids = tarefas.map(t => t.id)
+
+  // 3. Busca todas as tags associadas a esses IDs de uma só vez
+  const tagsResult = await pool.query(
+    `
+    SELECT tt.tarefa_id, tg.id AS tag_id, tg.nome AS tag_nome
+    FROM tarefas_tags tt
+    INNER JOIN tags tg ON tg.id = tt.tag_id
+    WHERE tt.tarefa_id = ANY($1::int[])
+    ORDER BY tg.nome
+    `,
+    [ids]
+  )
+
+  // 4. Agrupa as tags por tarefa_id
+  const tagsPorTarefa = {}
+  for (const row of tagsResult.rows) {
+    if (!tagsPorTarefa[row.tarefa_id]) {
+      tagsPorTarefa[row.tarefa_id] = []
+    }
+    tagsPorTarefa[row.tarefa_id].push({
+      id: row.tag_id,
+      nome: row.tag_nome
+    })
+  }
+
+  // 5. Adiciona o array de tags em cada tarefa (array vazio se não houver)
+  for (const tarefa of tarefas) {
+    tarefa.tags = tagsPorTarefa[tarefa.id] || []
+  }
+
+  return tarefas
+}
 
   async buscarPorId(id) {
     // 1. Consulta a tarefa e o projeto (igual ao que já existia)
