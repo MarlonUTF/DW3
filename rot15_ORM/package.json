@@ -1,0 +1,32 @@
+{
+  "name": "dw3",
+  "version": "1.0.0",
+  "description": "Projetos, exemplos teóricos e exercícios realizados em sala de aula na disciplina de Desenvolvimento Web 3 no Curso Técnico Integrado em Informática da UTFPR-CM",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node --env-file=.env --watch src/server.js",
+    "drizzle:test": "node --env-file=.env src/scripts/testa-drizzle.js",
+    "drizzle:projetos": "node --env-file=.env src/scripts/lista-projetos-drizzle.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MarlonUTF/DW3.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/MarlonUTF/DW3/issues"
+  },
+  "homepage": "https://github.com/MarlonUTF/DW3#readme",
+  "dependencies": {
+    "@fastify/cors": "^11.2.0",
+    "drizzle-orm": "^0.45.2",
+    "fastify": "^5.8.5",
+    "pg": "^8.21.0"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.10"
+  }
+}
