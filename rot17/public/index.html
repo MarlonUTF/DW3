@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Tarefas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 min-h-screen text-slate-100 font-sans antialiased">
+    
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
+
+    <div class="max-w-2xl mx-auto px-4 py-12">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent mb-2">
+                Minhas Tarefas
+            </h1>
+            <p class="text-blue-300/60 text-sm">Organize seu dia com estilo</p>
+        </header>
+
+        <main class="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl p-6 mb-6">
+            
+            <form id="formTarefa" class="flex flex-col sm:flex-row gap-3 mb-6">
+                <input 
+                    type="text" 
+                    id="descricao" 
+                    placeholder="O que você precisa fazer?" 
+                    aria-label="Descrição da nova tarefa"
+                    class="flex-1 bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-blue-300/40 outline-none focus:border-blue-500/80 focus:bg-white/10 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300"
+                    autocomplete="off"
+                    autofocus
+                    required
+                >
+                <select 
+                    id="projetoId" 
+                    required
+                    class="bg-white/10 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-blue-500/80 focus:bg-white/10 focus:ring-2 focus:ring-blue-500/20 transition-all duration-300 min-w-[180px]"
+                >
+                    <option value="" disabled selected>Selecione um projeto</option>
+                </select>
+                <button 
+                    type="submit" 
+                    aria-label="Adicionar tarefa"
+                    class="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-400 hover:to-blue-400 text-white font-medium px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-green-500/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[140px]"
+                >
+                    <i class="fas fa-plus mr-2"></i>Adicionar
+                </button>
+            </form>
+
+            <nav class="flex gap-2 mb-6 flex-wrap" aria-label="Filtrar tarefas">
+                <button onclick="filtrar('todas')" data-filtro="todas" class="filtro-btn px-4 py-2 rounded-xl text-sm font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30 hover:bg-blue-500/30 transition-all duration-300">
+                    Todas
+                </button>
+                <button onclick="filtrar('pendente')" data-filtro="pendente" class="filtro-btn px-4 py-2 rounded-xl text-sm font-medium bg-white/5 text-blue-300/60 border border-white/10 hover:bg-white/10 hover:text-blue-300 transition-all duration-300">
+                    Pendentes
+                </button>
+                <button onclick="filtrar('concluida')" data-filtro="concluida" class="filtro-btn px-4 py-2 rounded-xl text-sm font-medium bg-white/5 text-blue-300/60 border border-white/10 hover:bg-white/10 hover:text-blue-300 transition-all duration-300">
+                    Concluídas
+                </button>
+            </nav>
+
+            <div id="listaTarefas" class="space-y-3 min-h-[150px]" aria-live="polite">
+                <div class="text-center text-blue-300/40 py-12 flex flex-col items-center justify-center">
+                    <i class="fas fa-spinner fa-spin text-3xl mb-3"></i>
+                    <p class="text-sm font-medium">Conectando à API...</p>
+                </div>
+            </div>
+        </main>
+
+        <footer class="text-center text-blue-300/30 text-xs">
+            <p>API configurada em <span class="text-blue-400/50 font-mono tracking-wide">http://localhost:3000</span></p>
+        </footer>
+    </div>
+
+    <script>
+        const API = 'http://localhost:3000';
+        let filtroAtual = 'todas';
+        let todasAsTarefas = []; // cache para filtro no cliente
+        const listaContainer = document.getElementById('listaTarefas');
+        const inputDescricao = document.getElementById('descricao');
+        const selectProjeto = document.getElementById('projetoId');
+
+        // --- Utilitários ---
+        const escapeHTML = (str) => {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag])
+            );
+        };
+
+        function mostrarToast(mensagem, tipo = 'erro') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const cores = tipo === 'sucesso' 
+                ? 'bg-green-500/90 border-green-500/50' 
+                : 'bg-red-500/90 border-red-500/50';
+                
+            const icone = tipo === 'sucesso' ? 'fa-check-circle' : 'fa-exclamation-circle';
+
+            toast.className = `flex items-center gap-3 px-4 py-3 rounded-lg border text-white text-sm font-medium shadow-lg backdrop-blur-md transform transition-all duration-300 translate-x-full opacity-0 ${cores}`;
+            toast.innerHTML = `<i class="fas ${icone}"></i> ${mensagem}`;
+            
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- Projetos ---
+        async function carregarProjetos() {
+            try {
+                /*
+                    Backend necessário:
+                    Adicione ao server.js uma rota:
+                    server.get('/projetos', async (req, reply) => {
+                        const result = await pool.query('SELECT id, nome FROM projetos ORDER BY id');
+                        return reply.send(result.rows);
+                    });
+                */
+                const res = await fetch(`${API}/projetos`);
+                if (!res.ok) throw new Error('Erro ao carregar projetos');
+                const projetos = await res.json();
+                popularSelectProjetos(projetos);
+            } catch (error) {
+                console.error('Falha ao obter projetos:', error);
+                // preenche com opção vazia, mas impede cadastro sem projeto
+                selectProjeto.innerHTML = '<option value="" disabled selected>Erro ao carregar projetos</option>';
+            }
+        }
+
+        function popularSelectProjetos(projetos) {
+            selectProjeto.innerHTML = '<option value="" disabled selected>Selecione um projeto</option>';
+            projetos.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.id;
+                option.textContent = escapeHTML(p.nome);
+                selectProjeto.appendChild(option);
+            });
+        }
+
+        // --- Tarefas ---
+        async function carregarTarefas() {
+            try {
+                const res = await fetch(`${API}/tarefas`);
+                
+                if (!res.ok) throw new Error('Falha na resposta da API');
+                
+                todasAsTarefas = await res.json();
+                aplicarFiltro();
+            } catch (error) {
+                listaContainer.innerHTML = `
+                    <div class="text-center text-red-400/80 py-12 bg-red-500/5 rounded-xl border border-red-500/10">
+                        <i class="fas fa-plug-circle-xmark text-4xl mb-3"></i>
+                        <p class="font-medium mb-1">Não foi possível carregar as tarefas</p>
+                        <p class="text-xs opacity-70">Verifique se sua API está rodando na porta 3000.</p>
+                    </div>`;
+            }
+        }
+
+        function aplicarFiltro() {
+            let tarefas = todasAsTarefas;
+            if (filtroAtual === 'pendente') {
+                tarefas = tarefas.filter(t => !t.concluido);
+            } else if (filtroAtual === 'concluida') {
+                tarefas = tarefas.filter(t => t.concluido);
+            }
+            renderizarTarefas(tarefas);
+        }
+
+        function renderizarTarefas(tarefas) {
+            if (!tarefas.length) {
+                const mensagem = filtroAtual === 'todas' 
+                    ? 'Nenhuma tarefa criada ainda' 
+                    : `Nenhuma tarefa ${filtroAtual} encontrada`;
+                
+                listaContainer.innerHTML = `
+                    <div class="text-center text-blue-300/40 py-12">
+                        <i class="fas fa-clipboard-list text-4xl mb-3 block opacity-50"></i>
+                        <p>${mensagem}</p>
+                    </div>`;
+                return;
+            }
+
+            listaContainer.innerHTML = tarefas.map(t => {
+                const isConcluida = t.concluido;
+                const descricaoSegura = escapeHTML(t.descricao);
+                const projetoNome = escapeHTML(t.projeto?.nome ?? 'Sem projeto');
+                const statusTexto = isConcluida ? 'Concluída' : 'Pendente';
+
+                // Renderiza as tags, se existirem
+                let tagsHTML = '';
+                if (t.tags && t.tags.length > 0) {
+                    tagsHTML = `
+                        <div class="flex flex-wrap gap-1 mt-1.5">
+                            ${t.tags.map(tag => `
+                                <span class="text-[10px] bg-blue-500/10 text-blue-300 px-2 py-0.5 rounded-full border border-blue-500/20">
+                                    ${escapeHTML(tag.nome)}
+                                </span>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+                
+                return `
+                    <div class="group flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-green-500/30 rounded-xl p-4 transition-all duration-300 ${isConcluida ? 'opacity-60 bg-white/5 hover:bg-white/5' : ''}">
+                        
+                        <button onclick="alternarStatus(${t.id}, ${isConcluida})" 
+                                aria-label="${isConcluida ? 'Marcar como pendente' : 'Marcar como concluída'}"
+                                class="flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-green-500/50 ${isConcluida ? 'bg-green-500 border-green-500' : 'border-blue-400/40 hover:border-blue-400'}">
+                            ${isConcluida ? '<i class="fas fa-check text-white text-xs"></i>' : ''}
+                        </button>
+                        
+                        <div class="flex-1 min-w-0">
+                            <p class="text-white/90 truncate transition-all duration-300 ${isConcluida ? 'line-through text-white/40' : ''}">
+                                ${descricaoSegura}
+                            </p>
+                            <p class="text-[10px] text-blue-300/50 mt-0.5">${projetoNome}</p>
+                            ${tagsHTML}
+                        </div>
+                        
+                        <span class="text-[10px] uppercase tracking-wider px-2 py-1 rounded-md font-bold ${isConcluida ? 'bg-green-500/10 text-green-400' : 'bg-blue-500/10 text-blue-400'}">
+                            ${statusTexto}
+                        </span>
+                        
+                        <button onclick="removerTarefa(${t.id})" 
+                                aria-label="Remover tarefa"
+                                class="text-red-400/40 hover:text-red-500 hover:bg-red-500/10 rounded-lg p-2 opacity-0 group-hover:opacity-100 transition-all duration-300 focus:opacity-100 focus:outline-none">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- Formulário ---
+        document.getElementById('formTarefa').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const descricao = inputDescricao.value.trim();
+            const projetoId = parseInt(selectProjeto.value);
+            
+            if (!descricao || !projetoId) {
+                mostrarToast('Preencha a descrição e selecione um projeto.');
+                return;
+            }
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Salvando...';
+
+                const res = await fetch(`${API}/tarefas`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ descricao, projetoId })
+                });
+
+                if (res.ok) {
+                    inputDescricao.value = '';
+                    inputDescricao.focus();
+                    mostrarToast('Tarefa adicionada!', 'sucesso');
+                    carregarTarefas();
+                } else {
+                    const erro = await res.json();
+                    mostrarToast(erro.error || 'Erro ao adicionar tarefa');
+                }
+            } catch (error) {
+                mostrarToast('Falha na conexão com o servidor');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-plus mr-2"></i>Adicionar';
+            }
+        });
+
+        async function alternarStatus(id, concluidoAtual) {
+            try {
+                const res = await fetch(`${API}/tarefas/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ concluido: !concluidoAtual })
+                });
+                if (!res.ok) throw new Error();
+                
+                const msg = concluidoAtual ? 'Marcada como pendente' : 'Tarefa concluída!';
+                mostrarToast(msg, 'sucesso');
+                
+                carregarTarefas();
+            } catch (error) {
+                mostrarToast('Erro ao atualizar status da tarefa');
+            }
+        }
+
+        async function removerTarefa(id) {
+            if (!confirm('Deseja realmente excluir esta tarefa?')) return;
+
+            try {
+                const res = await fetch(`${API}/tarefas/${id}`, { method: 'DELETE' });
+
+                if (res.ok) {
+                    mostrarToast('Tarefa removida com sucesso', 'sucesso');
+                    carregarTarefas();
+                } else {
+                    const erro = await res.json();
+                    mostrarToast(erro.error || 'Erro ao remover');
+                }
+            } catch (error) {
+                mostrarToast('Falha de conexão ao tentar remover');
+            }
+        }
+
+        function filtrar(status) {
+            filtroAtual = status;
+            
+            document.querySelectorAll('.filtro-btn').forEach(btn => {
+                const isAtivo = btn.dataset.filtro === status;
+                if (isAtivo) {
+                    btn.classList.add('bg-blue-500/30', 'text-white', 'border-blue-400/50', 'shadow-inner');
+                    btn.classList.remove('bg-blue-500/20', 'bg-white/5', 'text-blue-300/60', 'border-white/10');
+                } else {
+                    btn.classList.remove('bg-blue-500/30', 'text-white', 'border-blue-400/50', 'shadow-inner');
+                    btn.classList.add('bg-white/5', 'text-blue-300/60', 'border-white/10');
+                }
+            });
+
+            aplicarFiltro();
+        }
+
+        // --- Inicialização ---
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarProjetos();
+            carregarTarefas();
+        });
+    </script>
+</body>
+</html>
